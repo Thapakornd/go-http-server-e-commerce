@@ -11,7 +11,7 @@ import (
 var mu sync.Mutex
 
 type User struct {
-	UserID      int64 `gorm:"primaryKey; autoIncremental:false"`
+	IDS         int64 `gorm:"autoIncremental:false"`
 	FirstName   string
 	LastName    string
 	Email       string
@@ -19,6 +19,10 @@ type User struct {
 	Password    string
 	BirthOfDate time.Time
 	Phone       string
+	Addresses   *[]Address   `gorm:"foreignKey:UserID"`
+	Payments    *[]Payment   `gorm:"foreignKey:UserID"`
+	CartSession *CartSession `gorm:"foreignKey:CreatedBy"`
+	Order       *Order       `gorm:"foreignKey:UserID"`
 	gorm.Model
 }
 
@@ -31,10 +35,10 @@ func (u *User) BeforeCreate(db *gorm.DB) error {
 
 	err := db.Where("userID = ?", "1%").Last(&lastUser).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		u.UserID = int64(10000000) // 8 Digits include 1
+		u.IDS = int64(10000000) // 8 Digits include 1
 		return nil
 	}
-	lastIndex = int(lastUser.UserID) + 1
-	u.UserID = int64(lastIndex)
+	lastIndex = int(lastUser.IDS) + 1
+	u.IDS = int64(lastIndex)
 	return nil
 }

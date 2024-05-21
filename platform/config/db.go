@@ -18,13 +18,12 @@ func New() *gorm.DB {
 	}
 
 	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=%s",
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Shanghai",
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_DATABASE"),
 		os.Getenv("DB_PORT"),
-		os.Getenv("DB_TIMEZONE"),
 	)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -39,5 +38,14 @@ func AutoMigrate(db *gorm.DB) {
 	db.AutoMigrate(
 		&models.User{},
 		&models.Product{},
+		&models.Address{},
+		&models.CartItem{},
+		&models.CartSession{},
+		&models.Category{},
+		&models.Order{},
+		&models.OrderItem{},
+		&models.OrderStatus{},
+		&models.Payment{},
+		&models.ShippingMethod{},
 	)
 }
