@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -26,6 +27,16 @@ type User struct {
 	gorm.Model
 }
 
+type SignUpUser struct {
+	FirstName   string    `json:"firstname" validate:"required"`
+	LastName    string    `json:"lastname" validate:"required"`
+	Email       string    `json:"email" validate:"required"`
+	Username    string    `json:"username" validate:"required"`
+	Password    string    `json:"password" validate:"required"`
+	BirthOfDate time.Time `json:"birth_of_date" validate:"required"`
+	Phone       string    `json:"phone" validate:"required"`
+}
+
 func (u *User) BeforeCreate(db *gorm.DB) error {
 	mu.Lock()
 	defer mu.Unlock()
@@ -41,4 +52,12 @@ func (u *User) BeforeCreate(db *gorm.DB) error {
 	lastIndex = int(lastUser.IDS) + 1
 	u.IDS = int64(lastIndex)
 	return nil
+}
+
+func (u *SignUpUser) HashPassword(plain string) (string, error) {
+	if len(plain) == 0 {
+		return "", errors.New("password should not be empty")
+	}
+	h, err := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.DefaultCost)
+	return string(h), err
 }
