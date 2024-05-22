@@ -2,14 +2,19 @@ package controllers
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/thapakornd/fiber-go/app/controllers"
 	"github.com/thapakornd/fiber-go/app/models"
+	"github.com/thapakornd/fiber-go/app/utils"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
-func SignUp(c *fiber.Ctx, db *gorm.DB, v *Validator) error {
+func SignUp(c *fiber.Ctx) error {
 	newUser := models.User{}
+	var v *controllers.Validator
 	req := &models.SignUpUser{}
 
 	if err := c.BodyParser(&req); err != nil {
@@ -76,8 +81,41 @@ func SignIn(c *fiber.Ctx, db *gorm.DB, v *Validator, u *models.User) error {
 		})
 	}
 
+	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(req.Password)); err != nil {
+		fmt.Printf("Unauthorized %v", req.Username)
+		return c.Status(fiber.ErrUnauthorized.Code).JSON(fiber.Map{
+			"status":  "fail-auth",
+			"message": gorm.ErrInvalidValue,
+		})
+	}
+
+	accessToken := utils.GenerateJWT(u, 24*3)
+	refreshToken := utils.GenerateJWT(u, 24*7)
+
+	c.Cookie(&fiber.Cookie{
+		Name:    "access-t",
+		Value:   accessToken,
+		Expires: time.Now().Add(24 * 3 * time.Hour),
+	})
+
+	c.Cookie(&fiber.Cookie{
+		Name:    "refresh-t",
+		Value:   refreshToken,
+		Expires: time.Now().Add(24 * 7 * time.Hour),
+	})
+
 	return c.Status(fiber.StatusAccepted).JSON(fiber.Map{
 		"status":  "success",
 		"message": "Successful Login",
+	})
+}
+
+func SignOut(c *fiber.Ctx) error {
+
+	c.ClearCookie("refresh-t", "access-t")
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":  "success",
+		"message": "Successful logout",
 	})
 }
