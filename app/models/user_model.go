@@ -27,6 +27,12 @@ type User struct {
 	gorm.Model
 }
 
+type SignInUser struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password" validate:"required"`
+}
+
 type SignUpUser struct {
 	FirstName   string    `json:"firstname" validate:"required"`
 	LastName    string    `json:"lastname" validate:"required"`
