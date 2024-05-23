@@ -5,16 +5,14 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/thapakornd/fiber-go/app/controllers"
 	"github.com/thapakornd/fiber-go/app/models"
 	"github.com/thapakornd/fiber-go/app/utils"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
-func SignUp(c *fiber.Ctx) error {
+func (h *Handler) SignUp(c *fiber.Ctx) error {
 	newUser := models.User{}
-	var v *controllers.Validator
 	req := &models.SignUpUser{}
 
 	if err := c.BodyParser(&req); err != nil {
@@ -24,7 +22,7 @@ func SignUp(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := v.Validate(req); err != nil {
+	if err := h.validator.Validate(req); err != nil {
 		return c.Status(fiber.ErrBadRequest.Code).JSON(err)
 	}
 
@@ -40,11 +38,13 @@ func SignUp(c *fiber.Ctx) error {
 	newUser.Username = req.Username
 	newUser.BirthOfDate = req.BirthOfDate
 	newUser.Phone = req.Phone
+	newUser.CreatedAt = time.Now()
+	newUser.UpdatedAt = time.Now()
 
-	if err := db.Create(&newUser); err != nil {
+	if err := h.userStore.Create(&newUser); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"status":  "fail",
-			"message": err.Error.Error(),
+			"message": err.Error(),
 		})
 	}
 
@@ -56,8 +56,10 @@ func SignUp(c *fiber.Ctx) error {
 	})
 }
 
-func SignIn(c *fiber.Ctx, db *gorm.DB, v *Validator, u *models.User) error {
+func (h *Handler) SignIn(c *fiber.Ctx) error {
 	req := &models.SignInUser{}
+	var err error
+	var u *models.User
 
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
@@ -66,18 +68,21 @@ func SignIn(c *fiber.Ctx, db *gorm.DB, v *Validator, u *models.User) error {
 		})
 	}
 
-	if req.Email == "" && req.Username == "" {
+	if req.Email != "" {
+		u, err = h.userStore.GetByEmail(req.Username)
+	} else if req.Username != "" {
+		u, err = h.userStore.GetByUsername(req.Username)
+	} else {
 		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
 			"status":  "fail",
-			"message": "Must have email or username",
+			"message": "Must have at least Username or Password",
 		})
 	}
 
-	if result := db.Where("email = ?", req.Email).Or("username = ?", req.Username).First(&u); result.RowsAffected == 0 {
-		fmt.Println("No records found")
-		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
-			"status":  "fail",
-			"message": gorm.ErrRecordNotFound,
+	if err != nil {
+		return c.Status(fiber.ErrUnauthorized.Code).JSON(fiber.Map{
+			"status":  "fail-auth",
+			"message": err.Error(),
 		})
 	}
 
@@ -89,33 +94,81 @@ func SignIn(c *fiber.Ctx, db *gorm.DB, v *Validator, u *models.User) error {
 		})
 	}
 
-	accessToken := utils.GenerateJWT(u, 24*3)
-	refreshToken := utils.GenerateJWT(u, 24*7)
+	genToken := &models.GenerateToken{
+		IDS:      u.IDS,
+		Username: u.Username,
+	}
+
+	accessToken := utils.GenerateJWT(genToken, 24*3)
+	refreshToken := utils.GenerateJWT(genToken, 24*7)
 
 	c.Cookie(&fiber.Cookie{
-		Name:    "access-t",
-		Value:   accessToken,
-		Expires: time.Now().Add(24 * 3 * time.Hour),
+		Name:     "access-t",
+		Value:    accessToken,
+		Expires:  time.Now().Add(24 * 3 * time.Hour),
+		HTTPOnly: true,
+		Secure:   true,
 	})
 
 	c.Cookie(&fiber.Cookie{
-		Name:    "refresh-t",
-		Value:   refreshToken,
-		Expires: time.Now().Add(24 * 7 * time.Hour),
+		Name:     "refresh-t",
+		Value:    refreshToken,
+		Expires:  time.Now().Add(24 * 7 * time.Hour),
+		HTTPOnly: true,
+		Secure:   true,
 	})
 
-	return c.Status(fiber.StatusAccepted).JSON(fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"status":  "success",
 		"message": "Successful Login",
 	})
 }
 
-func SignOut(c *fiber.Ctx) error {
+func (h *Handler) SignOut(c *fiber.Ctx) error {
 
 	c.ClearCookie("refresh-t", "access-t")
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"status":  "success",
 		"message": "Successful logout",
+	})
+}
+
+func (h *Handler) Refresh(c *fiber.Ctx) error {
+	req := &models.RefreshToken{}
+	var newToken string
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
+			"status":  "fail",
+			"message": err.Error(),
+		})
+	}
+
+	claims, err := utils.VerifyJWT(req.RefreshToken)
+	if err != nil {
+		return c.Status(fiber.ErrUnauthorized.Code).JSON(fiber.Map{
+			"status":  "fail-auth",
+			"message": err.Error(),
+		})
+	}
+
+	genToken := &models.GenerateToken{
+		IDS:      claims["id"].(int64),
+		Username: claims["username"].(string),
+	}
+	newToken = utils.GenerateJWT(genToken, 24*3)
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "access-t",
+		Value:    newToken,
+		Expires:  time.Now().Add(24 * 3 * time.Hour),
+		HTTPOnly: true,
+		Secure:   true,
+	})
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":  "success",
+		"message": "Get new access token",
 	})
 }

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -15,7 +16,7 @@ type AuthorizationRefreshToken struct {
 	RefreshToken string `json:"refreshToken" validate:"required"`
 }
 
-func GenerateJWT(u *models.User, expHour int64) string {
+func GenerateJWT(u *models.GenerateToken, expHour int64) string {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error Loading .env file")
 	}
@@ -38,7 +39,7 @@ func GenerateJWT(u *models.User, expHour int64) string {
 	return t
 }
 
-func VerifyJWT(t string) (*jwt.MapClaims, error) {
+func VerifyJWT(t string) (jwt.MapClaims, error) {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
 	}
@@ -52,7 +53,8 @@ func VerifyJWT(t string) (*jwt.MapClaims, error) {
 		return nil, err
 	}
 
-	claims, _ := token.Claims.(*jwt.MapClaims)
-
-	return claims, nil
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, nil
+	}
+	return nil, fmt.Errorf("invalid token")
 }

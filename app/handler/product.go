@@ -1,22 +1,23 @@
 package controllers
 
-import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/thapakornd/fiber-go/app/models"
-	"gorm.io/gorm"
-)
+import "github.com/gofiber/fiber/v2"
 
-type ProductQueries struct {
-	*gorm.DB
+func (h *Handler) GetAllProducts(c *fiber.Ctx) error {
+	return nil
 }
 
-func AllProducts(c *fiber.Ctx, db *gorm.DB) error {
-	products := []models.Product{}
-	db.Find(&products)
-	return c.Status(200).JSON(fiber.Map{
-		"error":    false,
-		"msg":      nil,
-		"count":    len(products),
-		"products": products,
-	})
+func (h *Handler) GetProduct(c *fiber.Ctx) error {
+	return nil
+}
+
+func (h *Handler) AddNewProduct(c *fiber.Ctx) error {
+	return nil
+}
+
+func (h *Handler) UpdateProduct(c *fiber.Ctx) error {
+	return nil
+}
+
+func (h *Handler) RemoveProduct(c *fiber.Ctx) error {
+	return nil
 }

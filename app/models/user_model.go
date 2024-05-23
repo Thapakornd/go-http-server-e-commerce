@@ -2,21 +2,18 @@ package models
 
 import (
 	"errors"
-	"sync"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
-var mu sync.Mutex
-
 type User struct {
-	IDS         int64 `gorm:"autoIncremental:false"`
+	IDS         int64 `gorm:"unique;autoIncremental:false"`
 	FirstName   string
 	LastName    string
-	Email       string
-	Username    string
+	Email       string `gorm:"unique"`
+	Username    string `gorm:"unique"`
 	Password    string
 	BirthOfDate time.Time
 	Phone       string
@@ -43,21 +40,13 @@ type SignUpUser struct {
 	Phone       string    `json:"phone" validate:"required"`
 }
 
-func (u *User) BeforeCreate(db *gorm.DB) error {
-	mu.Lock()
-	defer mu.Unlock()
+type RefreshToken struct {
+	RefreshToken string `json:"refreshToken" validate:"required"`
+}
 
-	lastUser := User{}
-	var lastIndex int
-
-	err := db.Where("userID = ?", "1%").Last(&lastUser).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		u.IDS = int64(10000000) // 8 Digits include 1
-		return nil
-	}
-	lastIndex = int(lastUser.IDS) + 1
-	u.IDS = int64(lastIndex)
-	return nil
+type GenerateToken struct {
+	IDS      int64  `json:"ids" validate:"required"`
+	Username string `json:"username" validate:"required"`
 }
 
 func (u *SignUpUser) HashPassword(plain string) (string, error) {

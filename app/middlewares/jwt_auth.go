@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"log"
-	"os"
+	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -20,21 +20,12 @@ func AuthorizeUser(c *fiber.Ctx) error {
 		})
 	}
 
-	claims, err := utils.VerifyJWT(token)
+	_, err := utils.VerifyJWT(token)
 	if err != nil {
 		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
 			"status":  "fail-auth",
 			"message": "token invalid",
 		})
-	}
-
-	for key, val := range *claims {
-		if key == "role" && val != os.Getenv("ADMIN_USER") {
-			return c.Status(fiber.ErrUnauthorized.Code).JSON(fiber.Map{
-				"status":  "fail-auth",
-				"message": "Unauthorized",
-			})
-		}
 	}
 
 	return c.Next()
@@ -64,13 +55,11 @@ func AuthorizeAdmin(c *fiber.Ctx) error {
 		})
 	}
 
-	for key, val := range *claims {
-		if key == "role" && val != os.Getenv("ADMIN_ROLE") {
-			return c.Status(fiber.ErrUnauthorized.Code).JSON(fiber.Map{
-				"status":  "fail-auth",
-				"message": "Unauthorized",
-			})
-		}
+	if []byte(strconv.FormatInt(claims["id"].(int64), 10))[0] != '1' {
+		return c.Status(fiber.ErrUnauthorized.Code).JSON(fiber.Map{
+			"status":  "fail-auth",
+			"message": "Unauthorized",
+		})
 	}
 
 	return c.Next()
