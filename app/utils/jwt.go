@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -16,7 +15,7 @@ type AuthorizationRefreshToken struct {
 	RefreshToken string `json:"refreshToken" validate:"required"`
 }
 
-func GenerateJWT(u *models.GenerateToken, expHour int64) string {
+func GenerateJWT(u *models.GenerateToken, expHour int64, role string) string {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error Loading .env file")
 	}
@@ -26,14 +25,9 @@ func GenerateJWT(u *models.GenerateToken, expHour int64) string {
 
 	claims := token.Claims.(jwt.MapClaims)
 
-	if strconv.FormatInt(u.IDS, 10)[0] == '1' {
-		claims["role"] = os.Getenv("USER_ROLE")
-	} else {
-		claims["role"] = os.Getenv("ADMIN_ROLE")
-	}
-
 	claims["id"] = u.IDS
 	claims["username"] = u.Username
+	claims["role"] = role
 	claims["exp"] = time.Now().Add(time.Hour * time.Duration(expHour)).Unix()
 	t, _ := token.SignedString(secretString)
 	return t
@@ -50,11 +44,15 @@ func VerifyJWT(t string) (jwt.MapClaims, error) {
 	})
 
 	if err != nil {
+		fmt.Printf("\n\nError: %s", err.Error())
 		return nil, err
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims, nil
+	if claims, ok := token.Claims.(*jwt.MapClaims); ok && token.Valid {
+		return *claims, nil
+	} else {
+		fmt.Println(claims, ok, token.Valid)
 	}
+
 	return nil, fmt.Errorf("invalid token")
 }

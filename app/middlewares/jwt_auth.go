@@ -1,51 +1,32 @@
 package middlewares
 
 import (
-	"log"
-	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/joho/godotenv"
 	"github.com/thapakornd/fiber-go/app/utils"
 )
 
-func AuthorizeUser(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), " ")[1]
-
-	if token == "" {
-		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
-			"status":  "fail-auth",
-			"message": "Can't find any token",
-		})
-	}
-
-	_, err := utils.VerifyJWT(token)
-	if err != nil {
-		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
-			"status":  "fail-auth",
-			"message": "token invalid",
-		})
-	}
-
-	return c.Next()
+type MiddlewareStruct struct {
+	role string
 }
 
-func AuthorizeAdmin(c *fiber.Ctx) error {
+func NewJWTAuth(role string) *MiddlewareStruct {
+	return &MiddlewareStruct{
+		role: role,
+	}
+}
 
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error Loading .env file")
-		return c.Status(fiber.ErrConflict.Code).JSON(err)
+func (r *MiddlewareStruct) AuthorizePermission(c *fiber.Ctx) error {
+
+	if err := c.Get("Authorization"); err == "" {
+		return c.Status(fiber.ErrForbidden.Code).JSON(fiber.Map{
+			"status":  "fail-auth",
+			"message": "permission not allowed",
+		})
 	}
 
 	token := strings.Split(c.Get("Authorization"), " ")[1]
-
-	if token == "" {
-		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
-			"status":  "fail-auth",
-			"message": "Can't find any token",
-		})
-	}
 
 	claims, err := utils.VerifyJWT(token)
 	if err != nil {
@@ -55,10 +36,12 @@ func AuthorizeAdmin(c *fiber.Ctx) error {
 		})
 	}
 
-	if []byte(strconv.FormatInt(claims["id"].(int64), 10))[0] != '1' {
+	permission := claims["role"].(string)
+
+	if permission != r.role {
 		return c.Status(fiber.ErrUnauthorized.Code).JSON(fiber.Map{
-			"status":  "fail-auth",
-			"message": "Unauthorized",
+			"status":  "Unauthorized",
+			"message": "fail-auth",
 		})
 	}
 

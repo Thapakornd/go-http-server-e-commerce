@@ -36,11 +36,25 @@ func (us *UserStruct) GetByID(id uint) (*models.User, error) {
 }
 
 func (us *UserStruct) GetByEmail(email string) (*models.User, error) {
-	return nil, nil
+
+	u := &models.User{}
+
+	if err := us.db.Where("email = ?", email).First(&u).Error; err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
 
 func (us *UserStruct) GetByUsername(username string) (*models.User, error) {
-	return nil, nil
+
+	u := &models.User{}
+
+	if err := us.db.Where("username = ?", username).First(&u).Error; err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
 
 func (us *UserStruct) Create(u *models.User) error {
