@@ -49,6 +49,16 @@ type GenerateToken struct {
 	Username string `json:"username" validate:"required"`
 }
 
+type APIUser struct {
+	IDS         uint64    `json:"ids"`
+	FirstName   string    `json:"first_name"`
+	LastName    string    `json:"last_name"`
+	Email       string    `json:"email"`
+	Username    string    `json:"username"`
+	BirthOfDate time.Time `json:"birth_of_date"`
+	Phone       string    `json:"phone"`
+}
+
 func (u *SignUpUser) HashPassword(plain string) (string, error) {
 	if len(plain) == 0 {
 		return "", errors.New("password should not be empty")

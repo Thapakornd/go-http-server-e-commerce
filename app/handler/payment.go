@@ -17,3 +17,7 @@ func (h *Handler) RemovePayment(c *fiber.Ctx) error {
 func (h *Handler) UpdatePayment(c *fiber.Ctx) error {
 	return nil
 }
+
+func (h *Handler) GetAllPayments(c *fiber.Ctx) error {
+	return nil
+}

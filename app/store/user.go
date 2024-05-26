@@ -12,11 +12,12 @@ import (
 var mu sync.Mutex
 
 type UserStore interface {
-	GetByID(uint) (*models.User, error)
+	GetAll(int, int, *[]models.APIUser) (int64, error)
+	GetByID(uint) (*models.APIUser, error)
 	GetByEmail(string) (*models.User, error)
 	GetByUsername(string) (*models.User, error)
 	Create(*models.User) error
-	Update(*models.User) error
+	Update(*models.APIUser, int) error
 	Delete(uint) error
 }
 
@@ -30,9 +31,30 @@ func NewUserStore(db *gorm.DB) *UserStruct {
 	}
 }
 
-func (us *UserStruct) GetByID(id uint) (*models.User, error) {
+func (us *UserStruct) GetAll(limit int, offset int, u *[]models.APIUser) (int64, error) {
 
-	return nil, nil
+	var total int64
+
+	if err := us.db.Model(&models.User{}).Limit(limit).Offset(offset).Order("id_s desc").Find(&u).Error; err != nil {
+		return 0, err
+	}
+
+	if err := us.db.Table("users").Count(&total).Error; err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+func (us *UserStruct) GetByID(id uint) (*models.APIUser, error) {
+
+	u := &models.APIUser{}
+
+	if err := us.db.Model(&models.User{}).Where("id_s = ?", id).First(&u).Error; err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
 
 func (us *UserStruct) GetByEmail(email string) (*models.User, error) {
@@ -81,10 +103,22 @@ func (us *UserStruct) Create(u *models.User) error {
 	return nil
 }
 
-func (us *UserStruct) Update(u *models.User) error {
+func (us *UserStruct) Update(u *models.APIUser, id int) error {
+
+	if err := us.db.Model(&models.User{}).Where("id_s = ?", id).Updates(&u).Error; err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (us *UserStruct) Delete(id uint) error {
+
+	u := &models.User{}
+
+	if err := us.db.Where("id_s = ?", id).Delete(&u).Error; err != nil {
+		return err
+	}
+
 	return nil
 }

@@ -15,7 +15,35 @@ func RegisterUser(r *fiber.App, h *controllers.Handler, m *middlewares.Middlewar
 	guestUsers.Post("/refresh", h.Refresh)
 	guestUsers.Get("/signOut", h.SignOut)
 
+	products := v1.Group("/products")
+	products.Get("", h.GetAllProducts)
+	products.Get("/:id", h.GetProduct)
+
 	user := v1.Group("/user", m.AuthorizePermission)
 	user.Get("/:id", h.CurrentUser)
-	user.Put("/update", h.UpdateUser)
+	user.Put("/update/:id", h.UpdateUser)
+
+	orders := user.Group("/orders")
+	orders.Get("/:id", h.CurrentOrder)
+	orders.Put("/:id", h.ChangeOrderInfo)
+	orders.Get("/cancel/:id", h.CancelOrder)
+
+	cart := user.Group("/cart")
+	cart.Get("/:id", h.CurrentCart)
+	cart.Post("/add/:id", h.AddItem)
+	cart.Post("/del/:id", h.RemoveItem)
+	cart.Put("/:id", h.UpdateItem)
+
+	addresses := user.Group("/addresses")
+	addresses.Get("/:id", h.CurrentAddresses)
+	addresses.Post("/:id", h.AddAddress)
+	addresses.Delete("/:id", h.RemoveAddress)
+	addresses.Put("/:id", h.UpdateAddress)
+
+	payments := user.Group("/payments")
+	payments.Get("/:id", h.CurrentPayments)
+	payments.Post("/:id", h.AddPayment)
+	payments.Put("/:id", h.UpdatePayment)
+	payments.Delete("/:id", h.RemovePayment)
+
 }

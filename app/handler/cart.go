@@ -17,3 +17,11 @@ func (h *Handler) RemoveItem(c *fiber.Ctx) error {
 func (h *Handler) UpdateItem(c *fiber.Ctx) error {
 	return nil
 }
+
+func (h *Handler) GetAllCarts(c *fiber.Ctx) error {
+	return nil
+}
+
+func (h *Handler) RemoveCart(c *fiber.Ctx) error {
+	return nil
+}

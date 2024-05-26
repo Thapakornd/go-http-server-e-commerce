@@ -32,9 +32,10 @@ func main() {
 	oss := store.NewOrderStore(d)
 	ps := store.NewPaymentStore(d)
 	prs := store.NewProductStore(d)
+	css := store.NewCategoryStore(d)
 
 	h := controllers.NewHandler(
-		us, as, cs, oss, ps, prs,
+		us, as, cs, css, oss, ps, prs,
 	)
 
 	// Auth-jwt-middleware

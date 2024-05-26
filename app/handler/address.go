@@ -11,6 +11,14 @@ func (h *Handler) AddAddress(c *fiber.Ctx) error {
 	return nil
 }
 
+func (h *Handler) UpdateAddress(c *fiber.Ctx) error {
+	return nil
+}
+
 func (h *Handler) RemoveAddress(c *fiber.Ctx) error {
+	return nil
+}
+
+func (h *Handler) GetAllAddresses(c *fiber.Ctx) error {
 	return nil
 }
