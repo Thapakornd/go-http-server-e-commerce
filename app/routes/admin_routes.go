@@ -37,4 +37,10 @@ func RegisterAdmin(r *fiber.App, h *controllers.Handler, m *middlewares.Middlewa
 
 	addresses := admin.Group("/addresses")
 	addresses.Get("", h.GetAllAddresses)
+
+	categories := admin.Group("/categories")
+	categories.Get("", h.GetAllCategories)
+	categories.Post("/add", h.AddCategory)
+	categories.Put("/:id", h.ChangeCategoryInfo)
+	categories.Delete("/:id", h.RemoveCategory)
 }

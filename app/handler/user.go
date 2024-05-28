@@ -101,5 +101,23 @@ func (h *Handler) GetAllUsers(c *fiber.Ctx) error {
 
 func (h *Handler) RemoveUser(c *fiber.Ctx) error {
 
-	return nil
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
+			"status":  "fail",
+			"message": err.Error(),
+		})
+	}
+
+	if err := h.userStore.Delete(id); err != nil {
+		return c.Status(fiber.ErrConflict.Code).JSON(fiber.Map{
+			"status":  "fail",
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":  "success",
+		"message": "success deleted",
+	})
 }

@@ -18,7 +18,7 @@ type UserStore interface {
 	GetByUsername(string) (*models.User, error)
 	Create(*models.User) error
 	Update(*models.APIUser, int) error
-	Delete(uint) error
+	Delete(int) error
 }
 
 type UserStruct struct {
@@ -112,11 +112,9 @@ func (us *UserStruct) Update(u *models.APIUser, id int) error {
 	return nil
 }
 
-func (us *UserStruct) Delete(id uint) error {
+func (us *UserStruct) Delete(id int) error {
 
-	u := &models.User{}
-
-	if err := us.db.Where("id_s = ?", id).Delete(&u).Error; err != nil {
+	if err := us.db.Where("id_s = ?", id).Delete(&models.User{}).Error; err != nil {
 		return err
 	}
 

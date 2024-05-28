@@ -1,18 +1,16 @@
 package store
 
 import (
-	"fmt"
-
 	"github.com/thapakornd/fiber-go/app/models"
 	"gorm.io/gorm"
 )
 
 type ProductStore interface {
-	GetAll(int, int, *[]models.APIProduct) error
-	GetByID(uint) (*models.Product, error)
-	Create(*models.Product) error
-	Update(*models.Product) error
-	Delete(uint) error
+	GetAll(int, int, *[]models.Product) (int64, error)
+	GetByID(int) (*models.Product, error)
+	Create(*models.APIProduct) error
+	Update(*models.APIProduct, int) error
+	Delete(int) error
 }
 
 type ProductStruct struct {
@@ -25,37 +23,81 @@ func NewProductStore(db *gorm.DB) *ProductStruct {
 	}
 }
 
-func (as *ProductStruct) GetAll(limit int, offset int, p *[]models.APIProduct) error {
+func (as *ProductStruct) GetAll(limit int, offset int, p *[]models.Product) (int64, error) {
 
-	// var total int64
-	p_model := &[]models.Product{}
+	var total int64
 
-	if err := as.db.Preload("Category").Find(&p_model).Error; err != nil {
+	if err := as.db.Preload("Category").Limit(limit).Offset(offset).Order("id desc").Find(&p).Error; err != nil {
+		return 0, err
+	}
+
+	if err := as.db.Table("categories").Count(&total).Error; err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+func (as *ProductStruct) GetByID(id int) (*models.Product, error) {
+
+	p := models.Product{}
+
+	if err := as.db.Where("id = ?", id).First(&p).Error; err != nil {
+		return nil, err
+	}
+
+	return &p, nil
+}
+
+func (as *ProductStruct) Create(p *models.APIProduct) error {
+
+	category_model := models.Category{}
+
+	if err := as.db.Select("id").Where("name = ?", p.Category).First(&category_model).Error; err != nil {
 		return err
 	}
 
-	fmt.Println(p_model)
+	new_product := models.Product{
+		Name:        p.Name,
+		Description: p.Description,
+		Price:       p.Price,
+		CategoryID:  uint64(category_model.ID),
+	}
 
-	return nil
-}
-
-func (as *ProductStruct) GetByID(id uint) (*models.Product, error) {
-	return nil, nil
-}
-
-func (as *ProductStruct) Create(p *models.Product) error {
-
-	if err := as.db.Create(&p).Error; err != nil {
+	if err := as.db.Create(&new_product).Error; err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (as *ProductStruct) Update(p *models.Product) error {
+func (as *ProductStruct) Update(p *models.APIProduct, id int) error {
+
+	category_model := models.Category{}
+
+	if err := as.db.Select("id").Where("name = ?", p.Category).First(&category_model).Error; err != nil {
+		return err
+	}
+
+	update_product := models.Product{
+		Name:        p.Name,
+		Description: p.Description,
+		Price:       p.Price,
+		CategoryID:  uint64(category_model.ID),
+	}
+
+	if err := as.db.Model(&models.Product{}).Where("id = ?", id).Updates(&update_product).Error; err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (as *ProductStruct) Delete(id uint) error {
+func (as *ProductStruct) Delete(id int) error {
+
+	if err := as.db.Where("id = ?", id).Delete(&models.Product{}).Error; err != nil {
+		return err
+	}
+
 	return nil
 }
