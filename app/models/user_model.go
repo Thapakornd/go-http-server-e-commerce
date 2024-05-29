@@ -50,6 +50,7 @@ type GenerateToken struct {
 }
 
 type APIUser struct {
+	ID          uint64    `json:"id"`
 	IDS         uint64    `json:"ids"`
 	FirstName   string    `json:"first_name"`
 	LastName    string    `json:"last_name"`

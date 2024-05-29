@@ -31,7 +31,7 @@ func (as *ProductStruct) GetAll(limit int, offset int, p *[]models.Product) (int
 		return 0, err
 	}
 
-	if err := as.db.Table("categories").Count(&total).Error; err != nil {
+	if err := as.db.Table("products").Count(&total).Error; err != nil {
 		return 0, err
 	}
 

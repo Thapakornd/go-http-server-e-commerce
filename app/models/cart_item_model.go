@@ -6,13 +6,7 @@ type CartItem struct {
 	gorm.Model
 	CartSession   CartSession `gorm:"foreignKey:CartSessionID"`
 	Product       Product     `gorm:"foreignKey:ProductID"`
-	CartSessionID uint64
-	ProductID     uint64
-	Quantity      int
-}
-
-type APICartItem struct {
-	CartID    int64 `json:"cart_id" validate:"required"`
-	ProductID int64 `json:"product_id" validate:"required"`
-	Quantity  int   `json:"quantity" validate:"required"`
+	CartSessionID uint64      `json:"cart_id" validate:"required"`
+	ProductID     uint64      `json:"product_id" validate:"required"`
+	Quantity      int         `json:"quantity" validate:"required"`
 }
