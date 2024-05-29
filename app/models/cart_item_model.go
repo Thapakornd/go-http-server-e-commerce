@@ -10,3 +10,9 @@ type CartItem struct {
 	ProductID     uint64
 	Quantity      int
 }
+
+type APICartItem struct {
+	CartID    int64 `json:"cart_id" validate:"required"`
+	ProductID int64 `json:"product_id" validate:"required"`
+	Quantity  int   `json:"quantity" validate:"required"`
+}

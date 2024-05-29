@@ -14,3 +14,11 @@ type Order struct {
 	ShippingMethodID uint64
 	Status           uint64
 }
+
+type APIOrder struct {
+	UserID           uint64
+	BillingAddressID uint64
+	PaymentID        uint64
+	ShippingID       uint64
+	Status           uint64
+}

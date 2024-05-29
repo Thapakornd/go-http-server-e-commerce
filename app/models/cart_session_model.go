@@ -9,3 +9,8 @@ type CartSession struct {
 	CartItems *[]CartItem `gorm:"foreignKey:CartSessionID"`
 	Status    string
 }
+
+type APICartSession struct {
+	CreatedBy int64
+	Status    string
+}

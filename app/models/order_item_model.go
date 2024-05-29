@@ -10,3 +10,9 @@ type OrderItem struct {
 	OrderID   uint64
 	Quantity  int
 }
+
+type APIOrderItem struct {
+	ProductID uint64
+	OrderID   uint64
+	Quantity  int
+}
